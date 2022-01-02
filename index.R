@@ -14,21 +14,18 @@ binance <- fromJSON(content(binance_response, as = "text"), flatten = TRUE)
 binance_symbols <- tolower(unique(c(binance$tickers$base, binance$tickers$target)))
 
 marketcap_excluding_stablecoins <- marketcap %>%
-  filter(symbol %in% binance_symbols) %>% 
-  filter(!symbol %in% stablecoins$symbol) %>%
+  filter(symbol %in% binance_symbols) %>%
+  filter(!symbol %in% stablecoins$symbol)
+
+index_fund <- marketcap_excluding_stablecoins %>%
   mutate(market_cap_squared = sqrt(market_cap)) %>%
   arrange(market_cap_rank) %>%
-  slice_head(n = 10)
+  slice_head(n = 10) %>%
+  mutate(percentage = market_cap_squared / sum(market_cap_squared)) %>%
+  mutate(label = sprintf("%s %.0f%%", symbol, percentage * 100))
 
-# Create Data
-data <- data.frame(
-  group = marketcap_excluding_stablecoins$symbol,
-  value = marketcap_excluding_stablecoins$market_cap_squared,
-  percentage = marketcap_excluding_stablecoins$market_cap_squared /
-    sum(marketcap_excluding_stablecoins$market_cap_squared)
-)
-
-# Basic piechart
-ggplot(data, aes(x="", y=value, fill=group)) + 
-  geom_bar(stat="identity", width=1) +
-  coord_polar("y", start=0)
+ggplot(index_fund, aes(x = "", y = percentage, fill = reorder(label, -percentage))) +
+  geom_col() +
+  geom_text(aes(label = symbol), position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y", start = 0) +
+  theme_void()
