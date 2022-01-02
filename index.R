@@ -28,4 +28,7 @@ ggplot(index_fund, aes(x = "", y = percentage, fill = reorder(label, -percentage
   geom_col() +
   geom_text(aes(label = symbol), position = position_stack(vjust = 0.5)) +
   coord_polar(theta = "y", start = 0) +
-  theme_void()
+  theme_void() +
+  theme(legend.title=element_blank()) +
+  labs(title = sprintf("Index fund %s", Sys.Date()))
+  
